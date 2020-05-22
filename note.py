@@ -5,6 +5,9 @@ import os
 from pdf2image import convert_from_path, convert_from_bytes
 import glob
 from PIL import Image
+from fuzzywuzzy import process, fuzz
+
+TAG_MARK = '@'
 
 
 def ocr_google(content):
@@ -33,7 +36,7 @@ def fuzzy_match(new_tag, tags, theta=85):
         return None
     
 
-path ='/Users/serge/Google Drive/NeoNotesPDF/Memo_Note_p11_20200515.pdf'
+path ='/Users/serge/Google Drive/NeoNotesPDF/scrap_book_p16_20200522.pdf'
 
 
 class Note:
@@ -68,23 +71,24 @@ class Note:
         if service == 'google':
             self.raw_text = ocr_google(self.content)
 
-    def extract_tags(self, mode=="linewise"):
+    def extract_tags(self, mode="linewise"):
 
         self.raw_tags = []
 
         if mode == "linewise":
             lines = self.raw_text.split("\n")
             for line in lines:
-                words = line.strip().split('#').split(" ")
-                words = list(filter(None, words)) # remove empty strings
-                tag = " ".join(words)
-                self.raw_tags.append(tag)
+                if TAG_MARK in line:
+                    words = line.strip().split(TAG_MARK)[-1].split(" ")
+                    words = list(filter(None, words)) # remove empty strings
+                    tag = " ".join(words)
+                    self.raw_tags.append(tag)
 
 
         if mode == "end": # only single word tags supported in this mode
-            end_tags = self.raw_text.replace("\n", " ").replace('\r', ' ').strip().split("#")[1]
+            end_tags = self.raw_text.replace("\n", " ").replace('\r', ' ').strip().split(TAG_MARK)[1]
             words = tags.split(" ")
-            words = list(filter(None, words)) # remove empyt strings
+            words = list(filter(None, words)) # remove empty strings
             self.raw_tags.extend(words)
 
 
@@ -92,16 +96,16 @@ class Note:
 
 
 
-    def tag(self, tags, new_tag=False):
+    def tag(self, tags, allow_new_tag=False):
         self.tags = []
         
-        for raw_tag in raw_tags:
-            matching_tag = fuzzy_match(tag, tags)
+        for raw_tag in self.raw_tags:
+            matching_tag = fuzzy_match(raw_tag, tags)
 
             if matching_tag is not None: 
                 self.tags.append(matching_tag)
 
-            if matching_tag is None and new_tag:
+            if matching_tag is None and allow_new_tag:
                 self.tags.append(raw_tag)
 
 
@@ -111,16 +115,16 @@ class Note:
     def process(self):
         self.load_from_path()
         self.image_to_text()
-  
-        self.tag()
-        return self.image, self.text
+        self.title = self.raw_text.split("\n")[0]
+        self.extract_tags()
+        return self.image, self.raw_text
 
 
 if __name__ == "__main__":
     note = Note(path)
     note.process()
 
-    info = f'''Note Text:\n{note.text}Tags: {note.tags}\nLines:{note.lines} '''
+    info = f'''Note Text:\n{note.raw_text}Tags: {note.raw_tags} '''
 
     print(info)
 

@@ -6,13 +6,33 @@ from pdf2image import convert_from_path, convert_from_bytes
 import glob
 from PIL import Image
 from fuzzywuzzy import process, fuzz
+from functools import wraps
+from hashlib import md5
+import pickle
 
 TAG_MARK = '@'
 
+def ocr_memo(func):
+    @wraps(func)
+    def wraper(arg):
+        try:
+            cache = pickle.load(open("ocr_cache.p", "rb"))
+        except FileNotFoundError:
+            cache = dict()
+        key = md5(arg.getbuffer()).hexdigest()
+        if key not in cache:
+            cache[key] = func(arg)
+        pickle.dump(cache, open("ocr_cache.p", "wb"))
+        return cache[key]
+    return wraper
 
+
+
+@ocr_memo
 def ocr_google(content):
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = "/Users/serge/projects/neonotes/googlecreds.json"
     client = vision.ImageAnnotatorClient()
+    print("calling google api")
     v_image = vision.types.Image(content=content.getvalue())
     response = client.document_text_detection(image=v_image)
  

@@ -2,18 +2,20 @@ from app import db
 from sqlalchemy.dialects.postgresql import JSON
 from flask_login import UserMixin
 
-from app import login
 
-class User(db.Model):
+
+class User(UserMixin,db.Model):
     __tablename__ = 'users'
 
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), index=True, unique=True)
+    id = db.Column(db.String(), primary_key=True, unique=True)
+    name = db.Column(db.String(64), index=True, unique=True)
     email = db.Column(db.String(120), index=True, unique=True)
 
 
-    def __init__(self, url, result_all, result_no_stop_words):
-        self.username = username
+
+    def __init__(self, id, name, email):
+        self.id = id
+        self.name = name
         self.email = email
 
     def __repr__(self):
@@ -23,7 +25,3 @@ class User(db.Model):
 
 
 
-
-@login.user_loader
-def load_user(id):
-    return User.query.get(int(id))

@@ -5,6 +5,8 @@
 ### Mine ##
 notes/*
 googlecreds.json
+credentials.json
+.env
 
 ### Flask ###
 instance/*
@@ -27,7 +29,7 @@ develop-eggs/
 dist/
 downloads/
 eggs/
-.eggs/
+.eggs/\
 lib/
 lib64/
 parts/

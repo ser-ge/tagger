@@ -5,7 +5,7 @@ import os.path
 import glob
 from time import time
 import pickle
-from note import Note 
+from note import Note
 from notion_client import NotionNotes
 
 

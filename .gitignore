@@ -7,7 +7,7 @@ notes/*
 googlecreds.json
 credentials.json
 .env
-
+client_secret.json
 ### Flask ###
 instance/*
 !instance/.gitignore

@@ -19,11 +19,12 @@ class NotionNotes:
 
     def add_note(self, note):
         self.get_tags_from_notion()
+        print(f'extentsion {note.ext}')
         note.process()
         row = self.notes_collection.collection.add_row()
         row.name = note.title
         image_container = row.children.add_new(ImageBlock, width=500)
-     
+
         path ='upload.jpg'
         text = row.children.add_new(TextBlock)
         text.title = note.raw_text
@@ -36,9 +37,9 @@ class NotionNotes:
             except KeyError:
                 new_tag = self.tags_collection.collection.add_row()
                 new_tag.name = tag
-            
+
             row.tags = [new_tag, *row.tags]
-        
+
         temp_file ='temp_upload_file.jpeg'
         note.image.save(path, "JPEG")
         image_container.upload_file(path)

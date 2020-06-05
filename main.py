@@ -5,7 +5,7 @@ import os.path
 import glob
 from time import time
 import pickle
-from note import Note
+from app.note import Note
 from notion_client import NotionNotes
 
 
@@ -44,6 +44,16 @@ def main():
 
 
     pickle.dump(time(), open("last_run.p", "wb"))
+
+def sync_to_notion(files):
+    notion_client = NotionNotes(token_v2,notes_collection_url, tags_colleciton_url)
+    for file in files:
+        print(f'File: {file[0]}, Content: {file[1]}')
+        try:
+            print(f'adding note {file[0]}')
+            notion_client.add_note(Note(path=file[0],file_buff=file[1] ))
+        except TypeError:
+            print(file[0] + ' of invalid type')
 
 
 if __name__ == "__main__":

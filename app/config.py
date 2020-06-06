@@ -12,4 +12,6 @@ class Config(object):
     DATABASE_URI = "postgresql:///tagger_dev"
     SSL_CONTEXT="adhoc"
 
+    SQLALCHEMY_TRACK_MODIFICATIONS= False
+
 #TODO: MOVE ALL CONFIG TO ENVIROMENT

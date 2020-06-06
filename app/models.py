@@ -1,9 +1,10 @@
-from app import db
+from app import db, login
 from sqlalchemy.dialects.postgresql import JSON
 from flask_login import UserMixin
 from sqlalchemy.dialects.postgresql import JSON
 import json
-from google_auth import credentials_to_json
+from app.gdrive.google_auth import credentials_to_json
+
 
 class User(UserMixin,db.Model):
     __tablename__ = 'users'
@@ -35,5 +36,10 @@ class User(UserMixin,db.Model):
 
 
 
+
+
+@login.user_loader
+def load_user(id):
+    return User.query.get(id)
 
 

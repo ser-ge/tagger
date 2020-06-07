@@ -12,7 +12,9 @@ class User(UserMixin,db.Model):
     id = db.Column(db.String(), primary_key=True, unique=True)
     name = db.Column(db.String(64), index=True, unique=True)
     email = db.Column(db.String(120), index=True, unique=True)
-    google_creds_json = db.Column(JSON)
+    google_creds_json = db.Column(JSON, nullable=True)
+    last_gdrive_sync = db.Column(db.DateTime, nullable=True)
+    evernote_token = db.Column(db.String)
 
     @property
     def google_creds(self):

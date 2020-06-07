@@ -16,14 +16,21 @@ def build_drive_service(creds_dict):
     drive = build(API_SERVICE_NAME, API_VERSION, credentials=credentials)
     return drive
 
-def get_files(folder_id, drive):
+def get_files(folder_id, drive, modified_since=None):
+
     page_token = None
     files =[]
     q= f"'{folder_id}' in parents"
+
+    if modified_since is not None:
+        start_time = modified_since.strftime('%Y-%m-%dT%H:%m:%S')
+        q_time =f"modifiedTime > '{start_time}'"
+        q = f'{q} and {q_time}'
+    print(f"Gdrive Api Query: '{q}'")
     while True:
         response = drive.files().list(q=q,
                                               spaces='drive',
-                                              fields='nextPageToken, files(id, name)',
+                                              fields='nextPageToken, files(id, name, modifiedTime)',
                                               pageToken=page_token).execute()
         for file in response.get('files', []):
             # Process change
@@ -35,14 +42,13 @@ def get_files(folder_id, drive):
     return files
 
 def process_files(files,drive):
-    print(type(files[0]))
     files = [(file.get('name'), download_file(file['id'],drive)) for file in files]
-    sync_to_notion(files)
+    if len(files) > 0:
+        sync_to_notion(files)
 
-def sync_drive(creds_dict):
+def sync_google_drive(creds_dict, modified_since):
     drive= build_drive_service(creds_dict)
-    files = get_files(TARGET_FOLDER, drive)
-    print(f'{len(files)} files downloaded')
+    files = get_files(TARGET_FOLDER, drive, modified_since)
     process_files(files,drive)
 
 

@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from flask import  redirect, url_for, session, jsonify
 
 from googleapiclient.discovery import build
@@ -6,7 +8,7 @@ import googleapiclient
 
 from flask_login import login_required, current_user
 from app.gdrive import google_auth
-from app.gdrive.sync_gdrive_folder import sync_drive
+from .sync_gdrive_folder import sync_google_drive
 
 from app.gdrive import gdrive
 from app import db
@@ -35,10 +37,17 @@ def auth_gdrive_callback():
   return redirect(url_for('gdrive.test_api_request'))
 
 
-@gdrive.route('/drive')
+@gdrive.route('/sync_drive')
 @login_required
-def drive():
-    sync_drive(current_user.google_creds)
+def sync_drive():
+    last_sync = current_user.last_gdrive_sync
+    print(f'Last Sync: {last_sync}')
+    try:
+        sync_google_drive(current_user.google_creds, last_sync)
+    except AttributeError:
+        pass
+    current_user.last_gdrive_sync = datetime.utcnow()
+    db.session.commit()
     return redirect(url_for('main.index'))
 
 @gdrive.route('/test')

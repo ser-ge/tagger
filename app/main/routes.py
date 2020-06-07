@@ -1,4 +1,4 @@
-from flask import Flask, redirect, request, url_for, session, jsonify, Blueprint
+from flask import Flask, redirect, request, url_for, session, jsonify, Blueprint, current_app
 from flask_sqlalchemy import SQLAlchemy
 import json
 import os
@@ -19,20 +19,22 @@ from app.main import main
 
 
 
+# @main.route("/")
+# def index():
+#     if current_user.is_authenticated:
+#         return (
+#            f"<p>Hello, {current_user.name}! You're logged in! Email: {current_user.email}</p>"
+#             "<div><p>Google Profile Picture:</p>"
+#             '<a class="button" href="/logout">Logout </a>'
+#             '<a class="button" href="/test">GDrive </a>'
+#             '<a class="button" href="/revoke">Revoke Google Creds </a>'
+#             '<a class="button" href="/sync_drive">Sync Drive </a>'
+#             '<div><a class="button" href="/get_evernote_tags"> All tags </a> </div>'
+#         )
+#     else:
+#         return '<a class="button" href="/login">Google Login</a>'
+
 @main.route("/")
 def index():
-    if current_user.is_authenticated:
-        return (
-           f"<p>Hello, {current_user.name}! You're logged in! Email: {current_user.email}</p>"
-            "<div><p>Google Profile Picture:</p>"
-            '<a class="button" href="/logout">Logout </a>'
-            '<a class="button" href="/test">GDrive </a>'
-            '<a class="button" href="/revoke">Revoke Google Creds </a>'
-            '<a class="button" href="/drive">Drive </a>'
-        )
-    else:
-        return '<a class="button" href="/login">Google Login</a>'
+    return current_app.send_static_file('index.html')
 
-
-if __name__ == '__main__':
-    app.run(ssl_context="adhoc")

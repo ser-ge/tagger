@@ -12,8 +12,8 @@ login = LoginManager()
 
 
 def create_app():
-
-    app = Flask(__name__)
+    build_dir = '/Users/serge/projects/neonotes/tagger-frontend/build/'
+    app = Flask(__name__,static_folder=build_dir, static_url_path='/')
     app.config.from_object(Config)
 
     db.init_app(app)
@@ -27,5 +27,8 @@ def create_app():
 
     from app.gdrive import gdrive
     app.register_blueprint(gdrive)
+
+    from app.evernote import evernote
+    app.register_blueprint(evernote)
 
     return app

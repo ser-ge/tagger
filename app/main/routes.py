@@ -38,3 +38,12 @@ from app.main import main
 def index():
     return current_app.send_static_file('index.html')
 
+@main.route("/user")
+def user():
+    if current_user.is_authenticated:
+        name = current_user.name
+        print(name)
+    else:
+        name = 'User not Logged in'
+
+    return jsonify({'name': current_user.name})

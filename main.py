@@ -14,7 +14,7 @@ from notion_client import NotionNotes
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = "/Users/serge/projects/neonotes/googlecreds.json"
 
 token_v2 ='a1bce12825e34bec193155b95765edddb3d1f85ded3ba139e4a5ad23a213a565ffe7d3a8bc4d7870aace1ec1f13361eb4902b586df9d04d3ae992b215cffc93cdf5a921c4a84e288d8e7e424ebbf'
-notes_collection_url = "https://www.notion.so/6cc22d25fb6b4b7c9b7f62a290851d15?v=1a34498ef4724620aa555ac7b7a671e1"
+notes_collection_url = "https://www.notion.so/6cc22d25fb6b4b7c9b7f62a290851d15?v=68d9b5f2492546ec8163d44f2fa585d9"
 tags_colleciton_url = "https://www.notion.so/5a145aae97344da7b28b7a0720eec707?v=347b6b7816624927a70eb3d650c11633"
 
 

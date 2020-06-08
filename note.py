@@ -66,11 +66,26 @@ class Note:
         self.img_types = ['png', 'jpg', 'jpeg']
         pdf = ['.pdf']
 
-        self.path = path 
+        self.path = path
         self.time_modified = os.path.getmtime(self.path)
         self.ext = path.split('.')[-1]
         print("Extension: ", self.ext)
 
+    def load_from_buff(self):
+ 
+        if self.ext == 'pdf':
+            self.image = convert_from_bytes(self.file_buff.getvalue(), single_file=True)[0]
+            buff = BytesIO()
+            self.image.save(buff, format='JPEG')
+            self.content = buff
+ 
+        elif self.ext in self.img_types:
+            self.content = self.file_buff
+            self.image = Image.open(self.content)
+ 
+        else:
+            raise TypeError("Invalid file format: only images or pdfs allowed")
+ 
     def load_from_path(self):
 
         with io.open(self.path, 'rb') as f:

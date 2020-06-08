@@ -35,14 +35,14 @@ def ocr_google(content):
     print("calling google api")
     v_image = vision.types.Image(content=content.getvalue())
     response = client.document_text_detection(image=v_image)
- 
+
 
     if response.error.message:
         raise Exception(
             '{}\nFor more info on error messages, check: '
             'https://cloud.google.com/apis/design/errors'.format(
                 response.error.message))
-    
+
     texts = response.text_annotations
     text = [text.description for text in texts][0]
     return text

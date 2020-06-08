@@ -15,6 +15,7 @@ class User(UserMixin,db.Model):
     google_creds_json = db.Column(JSON, nullable=True)
     last_gdrive_sync = db.Column(db.DateTime, nullable=True)
     evernote_token = db.Column(db.String)
+    tags = db.relationship('Tag', db.backref='user')
 
     @property
     def google_creds(self):
@@ -28,6 +29,7 @@ class User(UserMixin,db.Model):
     def google_creds(self):
         del self.google_creds_json
 
+
     def __init__(self, id, name, email):
         self.id = id
         self.name = name
@@ -36,7 +38,12 @@ class User(UserMixin,db.Model):
     def __repr__(self):
         return f'<id {self.id} Name {self.first_name} {self.last_name}>'
 
+class Tag(db.Model):
+    __tablename__ = 'tags'
 
+    id = db.Column(db.Interger, primary_key=True, unique=True)
+    text = db.Column(db.String(), nullable=False)
+    user_id = relationship(db.String, db.ForeignKey('user.id'))
 
 
 

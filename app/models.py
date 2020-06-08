@@ -41,9 +41,9 @@ class User(UserMixin,db.Model):
 class Tag(db.Model):
     __tablename__ = 'tags'
 
-    id = db.Column(db.Interger, primary_key=True, unique=True)
+    id = db.Column(db.Integer, primary_key=True, unique=True)
     text = db.Column(db.String(), nullable=False)
-    user_id = relationship(db.String, db.ForeignKey('user.id'))
+    user_id = db.relationship(db.String, db.ForeignKey('user.id'))
 
 
 

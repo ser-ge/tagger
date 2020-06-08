@@ -15,7 +15,7 @@ class User(UserMixin,db.Model):
     google_creds_json = db.Column(JSON, nullable=True)
     last_gdrive_sync = db.Column(db.DateTime, nullable=True)
     evernote_token = db.Column(db.String)
-    tags = db.relationship('Tag', db.backref='user')
+    tags = db.relationship('Tag', backref='user')
 
     @property
     def google_creds(self):

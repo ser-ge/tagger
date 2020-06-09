@@ -8,6 +8,7 @@ googlecreds.json
 credentials.json
 .env
 client_secret.json
+token.pickle
 ### Flask ###
 instance/*
 !instance/.gitignore

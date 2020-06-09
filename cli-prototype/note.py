@@ -54,7 +54,7 @@ def fuzzy_match(new_tag, tags, theta=85):
         return result[0]
     else:
         return None
-    
+
 
 path ='/Users/serge/Google Drive/NeoNotesPDF/scrap_book_p16_20200522.pdf'
 
@@ -71,21 +71,6 @@ class Note:
         self.ext = path.split('.')[-1]
         print("Extension: ", self.ext)
 
-    def load_from_buff(self):
- 
-        if self.ext == 'pdf':
-            self.image = convert_from_bytes(self.file_buff.getvalue(), single_file=True)[0]
-            buff = BytesIO()
-            self.image.save(buff, format='JPEG')
-            self.content = buff
- 
-        elif self.ext in self.img_types:
-            self.content = self.file_buff
-            self.image = Image.open(self.content)
- 
-        else:
-            raise TypeError("Invalid file format: only images or pdfs allowed")
- 
     def load_from_path(self):
 
         with io.open(self.path, 'rb') as f:
@@ -95,8 +80,7 @@ class Note:
                 self.image.save(buff, format='JPEG')
                 self.content = buff
 
-            elif self.ext in self.img_types:
-                self.content =  BytesIO(f.read())
+            elif self.ext in self.img_types: self.content =  BytesIO(f.read())
                 self.image = Image.open(self.content)
 
             else:
@@ -133,11 +117,11 @@ class Note:
 
     def tag(self, tags, allow_new_tag=False):
         self.tags = []
-        
+
         for raw_tag in self.raw_tags:
             matching_tag = fuzzy_match(raw_tag, tags)
 
-            if matching_tag is not None: 
+            if matching_tag is not None:
                 self.tags.append(matching_tag)
 
             if matching_tag is None and allow_new_tag:

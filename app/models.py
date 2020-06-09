@@ -45,6 +45,9 @@ class Tag(db.Model):
     text = db.Column(db.String(), nullable=False)
     user_id = db.relationship(db.String, db.ForeignKey('user.id'))
 
+    def __str__(self):
+        return self.text
+
 
 
 @login.user_loader

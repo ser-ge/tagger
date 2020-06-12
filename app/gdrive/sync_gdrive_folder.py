@@ -1,8 +1,9 @@
+import io
 import google
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
-import io
-from main import sync_to_notion
+
+
 API_SERVICE_NAME = 'drive'
 API_VERSION = 'v3'
 
@@ -17,12 +18,13 @@ def build_drive_service(creds_dict):
     return drive
 
 def get_files(folder_id, drive, modified_since=None):
+    ''' retrieve all files metadata in folder which have been modified since '''
 
     page_token = None
     files =[]
     q= f"'{folder_id}' in parents"
 
-    if modified_since is not None:
+    if modified_since:
         start_time = modified_since.strftime('%Y-%m-%dT%H:%m:%S')
         q_time =f"modifiedTime > '{start_time}'"
         q = f'{q} and {q_time}'
@@ -41,18 +43,29 @@ def get_files(folder_id, drive, modified_since=None):
             break
     return files
 
-def process_files(files,drive):
-    files = [(file.get('name'), download_file(file['id'],drive)) for file in files]
-    if len(files) > 0:
-        sync_to_notion(files)
+# def process_files(files,drive):
+#     files = [(file.get('name'), download_file(file['id'],drive)) for file in files]
+#     if len(files) > 0:
+#         sync_to_notion(files)
 
-def sync_google_drive(creds_dict, modified_since):
+def get_new_drive_files(creds_dict, modified_since):
+    ''' get a list of unsynced drive files
+    Args:
+        creds_dict: user's google creds dict
+        modified_since: datetime object, last sync time
+
+    Returns:
+        files: list containing tuples of (file_name, BytesIO of file content)
+   '''
+
     drive= build_drive_service(creds_dict)
     files = get_files(TARGET_FOLDER, drive, modified_since)
-    process_files(files,drive)
+    return files
+
 
 
 def download_file(file_id, drive):
+    """ download file from gdrive and return BytesIo object """
     request = drive.files().get_media(fileId=file_id)
     fh = io.BytesIO()
     downloader = MediaIoBaseDownload(fh, request)
@@ -61,9 +74,6 @@ def download_file(file_id, drive):
         status, done = downloader.next_chunk()
         print("Download {}".format( int(status.progress() * 100)))
     fh.seek(0)
-    with open('downloads/test.pdf', 'wb') as f:
-        f.write(fh.read())
-
     return fh
 
 

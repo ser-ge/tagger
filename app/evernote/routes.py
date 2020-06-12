@@ -13,9 +13,8 @@ from flask_login import (
 from oauthlib.oauth2 import WebApplicationClient
 
 from evernote.api.client import EvernoteClient
-from evernote.api import evernote_patch
+from app.evernote import evernote_patch
 
-from app.models import User
 from app import db
 
 from app.evernote import evernote
@@ -28,7 +27,7 @@ def get_evernote_tags():
     '''Retrieve all tags in evernote and add to DB'''
     token = os.getenv('EVERNOTE_TOKEN') # TODO implement oauth flow for evernote
 
-    lient = EvernoteClient(token=token, sandbox=False, china=False)
+    client = EvernoteClient(token=token, sandbox=False, china=False)
     note_store = client.get_note_store()
     tags = note_store.listTags()
 
@@ -39,5 +38,4 @@ def get_evernote_tags():
     current_user.tags += new_tags
     db.session.commit()
     return jsonify(tags)
-
 

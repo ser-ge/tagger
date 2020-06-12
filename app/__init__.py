@@ -2,11 +2,13 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from dotenv import load_dotenv
+from celery import Celery
 
 from app.config import Config
+from app.utils import make_celery, init_celery
 load_dotenv()
 
-
+celery = make_celery()
 db = SQLAlchemy()
 login = LoginManager()
 
@@ -16,6 +18,7 @@ def create_app():
     app = Flask(__name__,static_folder=build_dir, static_url_path='/')
     app.config.from_object(Config)
 
+    init_celery(celery, app)
     db.init_app(app)
     login.init_app(app)
 

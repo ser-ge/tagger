@@ -8,13 +8,16 @@ import googleapiclient
 
 from flask_login import login_required, current_user
 from app.gdrive import google_auth
-from .sync_gdrive_folder import sync_google_drive
+# from .sync_gdrive_folder import sync_google_drive
 
 from app.gdrive import gdrive
 from app import db
+
+
 DRIVE_SCOPES =["https://www.googleapis.com/auth/drive"]
 LOGIN_SCOPES = ["https://www.googleapis.com/auth/userinfo.profile",  "openid", "https://www.googleapis.com/auth/userinfo.email"]
 ALL_SCOPES = DRIVE_SCOPES + LOGIN_SCOPES
+
 API_SERVICE_NAME = 'drive'
 API_VERSION = 'v3'
 
@@ -37,18 +40,18 @@ def auth_gdrive_callback():
   return redirect(url_for('gdrive.test_api_request'))
 
 
-@gdrive.route('/sync_drive')
-@login_required
-def sync_drive():
-    last_sync = current_user.last_gdrive_sync
-    print(f'Last Sync: {last_sync}')
-    try:
-        sync_google_drive(current_user.google_creds, last_sync)
-    except AttributeError:
-        pass
-    current_user.last_gdrive_sync = datetime.utcnow()
-    db.session.commit()
-    return redirect(url_for('main.index'))
+# @gdrive.route('/sync_drive')
+# @login_required
+# def sync_drive():
+#     last_sync = current_user.last_gdrive_sync
+#     print(f'Last Sync: {last_sync}')
+#     try:
+#         sync_google_drive(current_user.google_creds, last_sync)
+#     except AttributeError:
+#         pass
+#     current_user.last_gdrive_sync = datetime.utcnow()
+#     db.session.commit()
+#     return redirect(url_for('main.index'))
 
 @gdrive.route('/test')
 @login_required

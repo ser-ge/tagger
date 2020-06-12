@@ -30,6 +30,7 @@ flask-script = "^2.0.6"
 psycopg2 = "^2.8.5"
 python-dotenv = "^0.13.0"
 evernote3 = "^1.25.13"
+celery = "^4.4.5"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.5.2"

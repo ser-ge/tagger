@@ -1,4 +1,3 @@
-from google.cloud import vision
 import io
 from io import BytesIO
 import os
@@ -6,13 +5,12 @@ from pdf2image import convert_from_path, convert_from_bytes
 import glob
 from PIL import Image
 from fuzzywuzzy import process, fuzz
-from functools import wraps
 from hashlib import md5
 import pickle
 
+from app.ocr import ocr_google
+from app.evernote.evernote_utils import new_note
 TAG_MARK = '@'
-
-path ='/Users/serge/Google Drive/NeoNotesPDF/scrap_book_p16_20200522.pdf'
 
 
 class Note:
@@ -32,6 +30,9 @@ class Note:
         self.target_tags = target_tags
         self.img_types = ['png', 'jpg', 'jpeg']
         self.ext = path.split('.')[-1]
+
+        self.actions = { "new": self.add_new_tag}
+
         print("Extension: ", self.ext)
 
     def _load_from_buff(self):
@@ -45,6 +46,11 @@ class Note:
         elif self.ext in self.img_types:
             self.content = self.file_buff
             self.image = Image.open(self.content)
+            buff = BytesIO()
+            self.image.save(buff, format='JPEG')
+            self.content = buff
+
+
 
         else:
             raise TypeError("Invalid file format: only images or pdfs allowed")
@@ -75,6 +81,10 @@ class Note:
         self.raw_tags = []
 
         if mode == "linewise":
+            '''
+            a tag is one or more words on a line begining with @
+            one tag per line
+            '''
             lines = self.raw_text.split("\n")
             for line in lines:
                 if TAG_MARK in line:
@@ -85,12 +95,43 @@ class Note:
 
 
         if mode == "end": # only single word tags supported in this mode
-            end_tags = self.raw_text.replace("\n", " ").replace('\r', ' ').strip().split(TAG_MARK)[1]
+            end_tags = self.raw_text\
+                           .replace('\r', ' ')\
+                           .replace("\n", " ")\
+                           .strip()\
+                           .split(TAG_MARK)[1]
+
             words = tags.split(" ")
             words = list(filter(None, words)) # remove empty strings
             self.raw_tags.extend(words)
 
         return self.raw_tags
+
+    def match_actions(self):
+        self.matched_actions = {}
+
+        for raw_tag in self.raw_tags:
+            first = raw_tag.split(" ")[0]
+            rest = raw_tag.split()[1:]
+            matching_action = fuzzy_match(first, self.target_actions)
+
+            if matching_action:
+                self.actions[matching_action] = rest
+                self.raw_tags.remove(raw_tag)
+
+    def process_actions(self):
+
+        for action, params in self.matched_actions.items():
+            try:
+                 self.actions[action](self,*params)
+
+            except KeyError:
+                raise KeyError
+
+            except Exception as e:
+                print(f'Action {action} failed')
+                print(e)
+
 
     def match_tags(self, allow_new_tag=False):
         '''Match raw tags against a list of target_tags, assign closest match to self.tags'''
@@ -107,6 +148,11 @@ class Note:
 
         return self.tags
 
+    def add_new_tag(self, *args):
+        tag = " ".join(args)
+
+        self.tags += tags
+
     def process(self):
         """
         Returns:
@@ -119,48 +165,24 @@ class Note:
         self.to_text()
         self.title = self.raw_text.split("\n")[0]
         self.extract_tags()
+        self.match_actions()
         self.match_tags()
+        self.process_actions()
         return self.title, self.raw_text, self.tags, self.image
 
+    def to_evernote(self, note_store, process=True):
 
-def ocr_memo(func):
-    """cacche for google vision api calls"""
-    @wraps(func)
-    def wraper(arg):
-        try:
-            cache = pickle.load(open("ocr_cache.p", "rb"))
-        except FileNotFoundError:
-            cache = dict()
-        key = md5(arg.getbuffer()).hexdigest()
-        if key not in cache:
-            cache[key] = func(arg)
-        pickle.dump(cache, open("ocr_cache.p", "wb"))
-        return cache[key]
-    return wraper
+        if process: self.process()
+        note = new_note(note_store, self.title, jpeg_bytesio=self.content)
+
+        return note
 
 
 
-@ocr_memo
-def ocr_google(content):
-    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = "/Users/serge/projects/neonotes/googlecreds.json"
-    client = vision.ImageAnnotatorClient()
-    print("calling google api")
-    v_image = vision.types.Image(content=content.getvalue())
-    response = client.document_text_detection(image=v_image)
+def fuzzy_match(new_tag, target_tags, theta=65):
+    '''Find the closest matching tag in target tags'''
 
-
-    if response.error.message:
-        raise Exception(
-            '{}\nFor more info on error messages, check: '
-            'https://cloud.google.com/apis/design/errors'.format(
-                response.error.message))
-
-    texts = response.text_annotations
-    text = [text.description for text in texts][0]
-    return text
-
-def fuzzy_match(new_tag, tags, theta=85):
-    result= process.extractOne(new_tag, tags, scorer=fuzz.partial_token_sort_ratio )
+    result= process.extractOne(new_tag, target_tags, scorer=fuzz.partial_token_sort_ratio )
     if result and (result[1] > theta):
         print(f"{new_tag} ==> {result[0]} ; score: {result[1]}")
         return result[0]

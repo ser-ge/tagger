@@ -31,7 +31,7 @@ class Note:
         self.img_types = ['png', 'jpg', 'jpeg']
         self.ext = path.split('.')[-1]
 
-        self.actions = { "new": self.add_new_tag}
+        self.target_actions = { "new": self.add_new_tag}
 
         print("Extension: ", self.ext)
 
@@ -161,19 +161,22 @@ class Note:
             tags: tags matched in target_tags
             image: PIL image object
         """
-        self._load_from_buff()
+        if self.file_buff:
+            self._load_from_buff()
+        else:
+            self._load_from_path()
         self.to_text()
         self.title = self.raw_text.split("\n")[0]
-        self.extract_tags()
-        self.match_actions()
+        self.extract_raw_tags()
+        if self.target_actions: self.match_actions()
         self.match_tags()
-        self.process_actions()
+        if self.target_actions: self.process_actions()
         return self.title, self.raw_text, self.tags, self.image
 
     def to_evernote(self, note_store, process=True):
 
         if process: self.process()
-        note = new_note(note_store, self.title, jpeg_bytesio=self.content)
+        note = new_note(note_store, self.title, self.raw_text,self.tags, jpeg_bytesio=self.content)
 
         return note
 

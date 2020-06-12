@@ -74,7 +74,6 @@ for notebook in notebooks:
 # # To include an attachment such as an image in a note, first create a Resource
 # # for the attachment. At a minimum, the Resource contains the binary attachment
 # # data, an MD5 hash of the binary data, and the attachment MIME type.
-# # It can also include attributes such as filename and location.
 # image_path = constants_path = os.path.join(os.path.dirname(__file__), "enlogo.png")
 # with open(image_path, 'rb') as image_file:
 #     image = image_file.read()
@@ -105,7 +104,7 @@ for notebook in notebooks:
 # # at http://dev.evernote.com/documentation/cloud/chapters/ENML.php
 # note.content = '<?xml version="1.0" encoding="UTF-8"?>'
 # note.content += '<!DOCTYPE en-note SYSTEM ' \
-#                 '"http://xml.evernote.com/pub/enml2.dtd">'
+        #                 '"http://xml.evernote.com/pub/enml2.dtd">'
 # note.content += '<en-note>Here is the Evernote logo:<br/>'
 # note.content += '<en-media type="image/png" hash="{}"/>'.format(hash_str)
 # note.content += '</en-note>'
@@ -114,5 +113,6 @@ for notebook in notebooks:
 # # The new Note object that is returned will contain server-generated
 # # attributes such as the new note's unique GUID.
 # created_note = note_store.createNote(note)
+# # It can also include attributes such as filename and location.
 
 # print("Successfully created a new note with GUID: ", created_note.guid)

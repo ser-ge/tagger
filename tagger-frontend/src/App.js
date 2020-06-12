@@ -27,6 +27,17 @@ function App() {
                 <a href='/logout'> Logout </a>
                 <div>{user}</div>
                 <a href="/get_evernote_tags"> All tags</a>
+                <div>
+                    <a href="/sync"> Sync Gdrive to Evernote </a>
+                </div>
+                <div>
+                    <a href="/auth_gdrive">Auth GDrive</a>
+                </div>
+                <div>
+                    <a href="/get_gdrive_folders">Get GDrive Folders</a>
+
+                </div>
+
             </div>
         </div >
  );

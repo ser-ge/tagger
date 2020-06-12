@@ -16,7 +16,7 @@ from evernote.api.client import EvernoteClient
 from app.evernote import evernote_patch
 
 from app import db
-
+from app.models import Tag
 from app.evernote import evernote
 
 
@@ -33,9 +33,9 @@ def get_evernote_tags():
 
     ever_tags = [tag.name for tag in tags]
     user_tags = [tag.text for tag in current_user.tags]
-    new_tags = [db.Tag(text=tag) for tags in ever_tags not in user_tags]
+    new_tags = [Tag(text=tag) for tag in ever_tags if tag  not in user_tags]
 
     current_user.tags += new_tags
     db.session.commit()
-    return jsonify(tags)
+    return jsonify([str(tag) for tag in current_user.tags])
 

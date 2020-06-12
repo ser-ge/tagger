@@ -1,5 +1,7 @@
 from functools import wraps
+import pickle
 from google.cloud import vision
+from hashlib import md5
 
 def ocr_memo(func):
     """cacche for google vision api calls"""

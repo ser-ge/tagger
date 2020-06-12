@@ -9,7 +9,7 @@ import googleapiclient
 from flask_login import login_required, current_user
 from app.gdrive import google_auth
 # from .sync_gdrive_folder import sync_google_drive
-
+from app.gdrive.sync_gdrive_folder import *
 from app.gdrive import gdrive
 from app import db
 
@@ -39,6 +39,13 @@ def auth_gdrive_callback():
   db.session.commit()
   return redirect(url_for('gdrive.test_api_request'))
 
+@gdrive.route('/get_gdrive_folders')
+@login_required
+def get_gdrive_folders():
+    drive = build_drive_service(current_user.google_creds)
+    folders = get_folders(drive)
+    folders_dict = {folder['name']:folder['id'] for folder in folders}
+    return jsonify(folders_dict)
 
 # @gdrive.route('/sync_drive')
 # @login_required

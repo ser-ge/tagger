@@ -2,6 +2,7 @@ from flask import Flask, redirect, request, url_for, session, jsonify, Blueprint
 from flask_sqlalchemy import SQLAlchemy
 import json
 import os
+from datetime import datetime
 from flask_login import (
     LoginManager,
     current_user,
@@ -54,21 +55,30 @@ def user():
 def schedule_sync():
 
     u = current_user
-    target_tags = [str(tag) for tag in user.tags]
+    target_tags = [str(tag) for tag in current_user.tags]
     evernote_token = os.getenv('EVERNOTE_TOKEN')
     # sync.delay(u.google_creds, evernote_token, u.last_gdrive_sync, target_tags)
-
     sync(u.google_creds, evernote_token, u.last_gdrive_sync, target_tags)
+    u.last_gdrive_sync = datetime.utcnow()
+    db.session.commit()
+    return jsonify({'status': "Success"})
 
 # @cl.task(bind=True)
 def sync(google_creds, evernote_token, last_gdrive_sync, target_tags):
-    files = get_new_drive_files(u.google_creds, u.last_gdrive_sync)
+    files = get_new_drive_files(google_creds, last_gdrive_sync)
+    if len(files) == 0: return {'status': 'Done', 'message':'no new files to sync'}
+    print(files)
     note_store = make_note_store(evernote_token)
-    notes = [Note(f[0], f[1], target_tags)]
+    notes = [Note(f[0], f[1], target_tags) for f in files]
     for note in notes:
+        try:
         # self.update_state(state='PROGRESS',
         #         meta:{'current': i, 'total': len(notes)})
-        note.to_evernote(note_store)
+            note.to_evernote(note_store)
+
+        except Exception as e:
+            print(f'{note.path} failed with exception:')
+            print(e)
 
     return {'status': 'Done!'}
 

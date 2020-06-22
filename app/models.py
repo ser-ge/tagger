@@ -3,7 +3,7 @@ from sqlalchemy.dialects.postgresql import JSON
 from flask_login import UserMixin
 from sqlalchemy.dialects.postgresql import JSON
 import json
-from app.gdrive.google_auth import credentials_to_json
+# from app.gdrive.google_auth import credentials_to_json
 
 
 class User(UserMixin,db.Model):
@@ -65,3 +65,11 @@ def load_user(user_id):
     return User.query.get(user_id)
 
 
+def credentials_to_json(credentials):
+    creds = {'token': credentials.token,
+          'refresh_token': credentials.refresh_token,
+          'token_uri': credentials.token_uri,
+          'client_id': credentials.client_id,
+          'client_secret': credentials.client_secret,
+          'scopes': credentials.scopes}
+    return json.dumps(creds)

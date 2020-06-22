@@ -1,5 +1,5 @@
 from celery import Celery
-
+import redis
 
 def make_celery(app_name=__name__):
     redis_uri = "redis://localhost:6379"

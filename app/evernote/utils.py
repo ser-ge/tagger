@@ -7,19 +7,20 @@ from evernote.api.client import EvernoteClient
 from app.evernote import evernote_patch
 
 
-
-
-def make_note_store(token=None):
-
-    if token is None:
-        token = os.getenv('EVERNOTE_TOKEN') # TODO implement oauth flow for evernote
-
+def build_evernote_store(user):
+    token = user.evernote_token
     client = EvernoteClient(token=token, sandbox=False, china=False)
     note_store = client.get_note_store()
     return note_store
 
+def get_evernote_tags(user):
+    note_store = build_evernote_store(user)
+    ever_tags = note_store.listTags()
+    tags = [tag.name for tag in ever_tags]
+    return tags
 
-def new_note(note_store, noteTitle, note_text,tags, jpeg_bytesio=None, parentNotebook=None):
+
+def new_evernote(note_store, noteTitle, note_text,tags, jpeg_bytesio=None, parentNotebook=None):
     ''' creates blank note and calls evenrote api to add to notestore '''
 
     nBody = '<?xml version="1.0" encoding="UTF-8"?>'
@@ -55,15 +56,11 @@ def new_note(note_store, noteTitle, note_text,tags, jpeg_bytesio=None, parentNot
     ## Return created note object
     return note
 
-def add_text(note, text):
+# def add_text(note, text):
 
-    content  = ET.fromstring(note)
-    text = content.attrib.get('en-note')
-    print(text)
-
-
-
-
+#     content  = ET.fromstring(note)
+#     text = content.attrib.get('en-note')
+#     print(text)
 
 
 def add_jpeg(note, jpeg_bytesio):
@@ -82,15 +79,15 @@ def add_jpeg(note, jpeg_bytesio):
     resource.mime = 'image/jpeg'
     resource.data = data
 
-# Now, add the new Resource to the note's list of resources
+    # Now, add the new Resource to the note's list of resources
     note.resources = [resource]
-# To display the Resource as part of the note's content, include an <en-media>
-# tag in the note's ENML content. The en-media tag identifies the corresponding
-# Resource using the MD5 hash.
+    # To display the Resource as part of the note's content, include an <en-media>
+    # tag in the note's ENML content. The en-media tag identifies the corresponding
+    # Resource using the MD5 hash.
 
-# The content of an Evernote note is represented using Evernote Markup Language
-# (ENML). The full ENML specification can be found in the Evernote API Overview
-# at http://dev.evernote.com/documentation/cloud/chapters/ENML.php
+    # The content of an Evernote note is represented using Evernote Markup Language
+    # (ENML). The full ENML specification can be found in the Evernote API Overview
+    # at http://dev.evernote.com/documentation/cloud/chapters/ENML.php
     hash_hex = binascii.hexlify(hash)
     hash_str = hash_hex.decode("UTF-8")
     note.content += '<en-media type="image/png" hash="{}"/>'.format(hash_str)

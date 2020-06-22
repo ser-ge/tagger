@@ -9,7 +9,7 @@ from hashlib import md5
 import pickle
 
 from app.ocr import ocr_google
-from app.evernote.evernote_utils import new_note
+from app.evernote.utils import new_evernote
 TAG_MARK = '@'
 
 
@@ -176,7 +176,7 @@ class Note:
     def to_evernote(self, note_store, process=True):
 
         if process: self.process()
-        note = new_note(note_store, self.title, self.raw_text,self.tags, jpeg_bytesio=self.content)
+        note = new_evernote(note_store, self.title, self.raw_text,self.tags, jpeg_bytesio=self.content)
 
         return note
 

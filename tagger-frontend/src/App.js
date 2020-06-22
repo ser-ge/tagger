@@ -1,18 +1,31 @@
-import React, {useState, useEffect} from 'react';
-import logo from './logo.svg';
+import React, { useState, useEffect, Fragment } from 'react';
+import {
+    BrowserRouter as Router,
+    Switch,
+    Route,
+    Link
+} from "react-router-dom";
 
 import './App.css';
-
+import LandingJumbo from './components/LandingJumbo'
 import Nav from './components/Nav'
 
+import Dashboard from './components/Dashboard'
 
 function App() {
 
-    const [user, setUser] = useState('No User')
+    const [user, setUser] = useState(false)
+    const [mUser, setmUser] = useState({
+        name: 'serge',
+        auth: true,
+        gdriveauth: false,
+        evernoteauth: false,
+        appconfig: null,
+    })
 
-    useEffect(()=> {
+    useEffect(() => {
         loadData();
-    },[]);
+    }, []);
 
     const loadData = async () => {
         const response = await fetch('/user');
@@ -20,27 +33,23 @@ function App() {
         setUser(data.name)
     }
     return (
-        <div class="container">
-            <Nav/>
-            <div >
-                <a href='/login'> Login </a>
-                <a href='/logout'> Logout </a>
-                <div>{user}</div>
-                <a href="/get_evernote_tags"> All tags</a>
-                <div>
-                    <a href="/sync"> Sync Gdrive to Evernote </a>
-                </div>
-                <div>
-                    <a href="/auth_gdrive">Auth GDrive</a>
-                </div>
-                <div>
-                    <a href="/get_gdrive_folders">Get GDrive Folders</a>
-
+        <Fragment>
+            <Router>
+                <div className="container vh-100">               
+                 <Nav user={mUser} />
+                    <Switch>
+                        <Route path="/home">
+                            <LandingJumbo />
+                        </Route>
+                        <Route path="/dashboard">
+                            <Dashboard user={user} />
+                        </Route>
+                    </Switch>
                 </div>
 
-            </div>
-        </div >
- );
+            </Router>
+        </Fragment>
+    );
 }
 
 export default App;

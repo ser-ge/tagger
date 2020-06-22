@@ -1,35 +1,39 @@
-import React, { useState, useEffect, useReducer } from 'react';
+import React, { useState, useEffect, useReducer } from "react";
+import {Link} from "react-router-dom"
 
+const Nav = ({user}) => {
+  return (
+    <nav class="navbar navbar-expand-lg navbar-light bg-light justify-content-between">
+      <a class="navbar-brand " href="#">
+        Tagger
+      </a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-toggle="collapse"
+        data-target="#navbarNavAltMarkup"
+        aria-controls="navbarNavAltMarkup"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse justify-content-end" id="navbarNavAltMarkup">
+        <div class="navbar-nav ">
+          <Link className="nav-item nav-link active" to="/dashboard">Dashboard</Link>
+          <a class="nav-item nav-link active" href="/sync">
+            Sync <span class="sr-only">(current)</span>
+          </a>
+          <a class="nav-item nav-link" href="/logout">
+            Logout
+          </a>
+          <a class="nav-item nav-link" href="/login">
+            Login
+          </a>
+        </div>
+      </div>
+    </nav>
+  );
+};
 
-
-
-
-const Nav = (user) => {
-
-
-
-    return (
-
-        <nav>
-            <div class="nav-wrapper black">
-                <div className="col s1"></div>
-                <a href="#!" className="brand-logo white-text centre-align"> tagger</a>
-                <ul id="nav-mobile" class="right hide-on-med-and-down">
-                    {user.auth ?
-                        <li><a className="btn white black-text" href="/login">Login</a></li> :
-                        <li><a className="btn white black-text" href="/logout">Logout</a></li>
-                    }
-                </ul>
-            </div>
-        </nav>
-
-
-
-    );
-
-}
-
-
-
-export default Nav
-
+export default Nav;

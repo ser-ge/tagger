@@ -5,7 +5,6 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 class Config(object):
     DEBUG = True
     DEVELOPMENT = True
-    TESTING = False
     CSRF_ENABLED = True
     SECRET_KEY = 'fdsgdfgsdfgdfsgdsfgewrgr44534rtergsdfv'
     SQLALCHEMY_DATABASE_URI = "postgresql:///tagger_prod"
@@ -15,4 +14,10 @@ class Config(object):
     SQLALCHEMY_TRACK_MODIFICATIONS= False
     CELERY_BROKER_URL='redis://localhost:6379',
     CELERY_RESULT_BACKEND='redis://localhost:6379'
+
+class TestConfig(Config):
+    TESTING = True
+
+class DevConfig(Config):
+    TESTING =False
 #TODO: MOVE ALL CONFIG TO ENVIROMENT

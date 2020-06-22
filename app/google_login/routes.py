@@ -85,7 +85,7 @@ def callback():
         return "User email not available or not verified by Google.", 400
 
     user = User(
-        id=unique_id, name=users_name, email=users_email,
+        user_id=unique_id, name=users_name, email=users_email,
     )
 
 

@@ -8,8 +8,8 @@ import googleapiclient
 
 from flask_login import login_required, current_user
 from app.gdrive import google_auth
-# from .sync_gdrive_folder import sync_google_drive
-from app.gdrive.sync_gdrive_folder import *
+
+from app.gdrive.utils import *
 from app.gdrive import gdrive
 from app import db
 
@@ -42,43 +42,20 @@ def auth_gdrive_callback():
 @gdrive.route('/get_gdrive_folders')
 @login_required
 def get_gdrive_folders():
-    drive = build_drive_service(current_user.google_creds)
-    folders = get_folders(drive)
+    folders = get_drive_folders(user)
     folders_dict = {folder['name']:folder['id'] for folder in folders}
     return jsonify(folders_dict)
 
-# @gdrive.route('/sync_drive')
-# @login_required
-# def sync_drive():
-#     last_sync = current_user.last_gdrive_sync
-#     print(f'Last Sync: {last_sync}')
-#     try:
-#         sync_google_drive(current_user.google_creds, last_sync)
-#     except AttributeError:
-#         pass
-#     current_user.last_gdrive_sync = datetime.utcnow()
-#     db.session.commit()
-#     return redirect(url_for('main.index'))
 
 @gdrive.route('/test')
 @login_required
 def test_api_request():
-    print("/test route")
-    print(current_user.google_creds)
     if current_user.google_creds is None:
         return redirect('gdrive.authorize')
 
-# Load credentials from the db.
-    credentials = google.oauth2.credentials.Credentials(
-      **current_user.google_creds)
-
-    drive = googleapiclient.discovery.build(
-      API_SERVICE_NAME, API_VERSION, credentials=credentials)
-
+    drive = build_drive_service(user)
     files = drive.files().list().execute()
 
-# Save credentials back to db in case access token was refreshed.
-    current_user.google_creds = credentials
     return jsonify(**files)
 
 
@@ -100,5 +77,4 @@ def revoke():
     if status_code == 200:
         return('Credentials successfully revoked.')
     else:
-        print(revoke)
         return('An error occurred.')

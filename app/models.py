@@ -17,6 +17,12 @@ class User(UserMixin,db.Model):
     tags = db.relationship('Tag', back_populates='user')
     test_field = db.Column(db.String(120), index=True, unique=True)
 
+    # def __init__(self, user_id, name, email):
+    #     self.user_id = user_id
+    #     self.name = name
+    #     self.email = email
+
+
     @property
     def google_creds(self):
         return json.loads(self.google_creds_json)
@@ -29,18 +35,22 @@ class User(UserMixin,db.Model):
     def google_creds(self):
         del self.google_creds_json
 
+    @property
+    def gdrive_folder_id(self): #TODO store in db once folder selction flow works
 
-    def __init__(self, user_id, name, email):
-        self.user_id = user_id
-        self.name = name
-        self.email = email
+        TARGET_FOLDER = '14XoumtXaKPkcTUIxp-gZDyJUgnAcXjfg'
+        return TARGET_FOLDER
+
+    @property
+    def last_sync(self):
+        return self.last_gdrive_sync.strftime('%Y-%m-%dT%H:%M:%S')
 
     def __repr__(self):
-        return f'<id {self.id} Name {self.first_name} {self.last_name}>'
+        return f'<id {self.user_id} Name {self.first_name} {self.last_name}>'
 
 class Tag(db.Model):
 
-    tag_id = db.Column(db.Integer, primary_key=True, unique=True)
+    tag_id = db.Column(db.Integer, primary_key=True, unique=True, autoincrement=True)
     text = db.Column(db.String(), nullable=False)
     user_id = db.Column(db.String, db.ForeignKey('user.user_id'),primary_key=True)
     user = db.relationship('User', back_populates='tags')
@@ -51,7 +61,7 @@ class Tag(db.Model):
 
 
 @login.user_loader
-def load_user(id):
-    return User.query.get(id)
+def load_user(user_id):
+    return User.query.get(user_id)
 
 

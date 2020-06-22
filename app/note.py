@@ -1,5 +1,7 @@
 import io
 from io import BytesIO
+from typing import List
+
 import os
 from pdf2image import convert_from_path, convert_from_bytes
 import glob
@@ -12,6 +14,7 @@ from app.ocr import ocr_google
 from app.evernote.utils import new_evernote
 TAG_MARK = '@'
 
+from app.adapter import File
 
 class Note:
     """
@@ -23,10 +26,10 @@ class Note:
         target_tags ([str,]): list of target tags against witch found tags are matched
     """
 
-    def __init__(self, path, file_buff, target_tags):
+    def __init__(self, file: File, target_tags: List[str]):
 
-        self.path = path
-        self.file_buff = file_buff
+        self.path = file.names
+        self.file_buff = file.content
         self.target_tags = target_tags
         self.img_types = ['png', 'jpg', 'jpeg']
         self.ext = path.split('.')[-1]
@@ -39,9 +42,11 @@ class Note:
 
         if self.ext == 'pdf':
             self.image = convert_from_bytes(self.file_buff.getvalue(), single_file=True)[0]
-            buff = BytesIO()
-            self.image.save(buff, format='JPEG')
+            self.file_buff.truncate(0)
+            self.file_buff.seek(0)
+            self.image.save(self.file_buff, format='JPEG')
             self.content = buff
+            self.file_buff.close()
 
         elif self.ext in self.img_types:
             self.content = self.file_buff
@@ -49,7 +54,7 @@ class Note:
             buff = BytesIO()
             self.image.save(buff, format='JPEG')
             self.content = buff
-
+            self.file_buff.close()
 
 
         else:
@@ -175,10 +180,18 @@ class Note:
 
     def to_evernote(self, note_store, process=True):
 
-        if process: self.process()
-        note = new_evernote(note_store, self.title, self.raw_text,self.tags, jpeg_bytesio=self.content)
+        try:
+            if process: self.process()
+            note = new_evernote(note_store, self.title, self.raw_text,self.tags, jpeg_bytesio=self.content)
 
-        return note
+            return note
+
+        except Exception as e:
+            print(f'{note.path} failed with exception: {e}')
+
+        finally:
+            self.content.close()
+
 
 
 

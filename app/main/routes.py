@@ -33,6 +33,3 @@ def schedule_sync():
     sync_drive_to_evernote.delay(current_user.user_id)
     return jsonify({'status': "IN PROGRESS"})
 
-@main.route("/test")
-def test_link():
-    return jsonify({"hello":"world"})

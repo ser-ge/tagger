@@ -1,25 +1,17 @@
 from io import BytesIO
-from datetime import datetime
-from typing import List, Optional
 
-from pydantic import BaseModel
 import google
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
+
+from app.schemas import File, Files
 
 API_SERVICE_NAME = "drive"
 API_VERSION = "v3"
 
 
-class File(BaseModel):
-    id: str
-    name: str
-    # date_modified: datetime
-    # mime_type
-    content: Optional[BytesIO]
 
-    class Config:
-        arbitrary_types_allowed = True
+
 
 class DriveFolder:
 
@@ -36,16 +28,16 @@ class DriveFolder:
         self._intialise_drive_folder()
 
     def _intialise_drive_folder(self):
-        self.drive, self.returned_credentials = build_drive_service(self.credentials)
+        self.drive, self._returned_credentials = build_drive_service(self.credentials)
         query = construct_drive_query(self.folder_id, self.filters)
         drive_files = get_drive_files_metadata(query, self.drive)
 
-        self.files = {file['id'] : File(**file) for file in drive_files}
+        self.files_dict = {file['id'] : File(**file) for file in drive_files}
 
 
     def get_file(self, file_id):
 
-        file = self.files[file_id]
+        file = self.files_dict[file_id]
         if file.content is None:
             file.content = download_drive_file(file.id)
             self.files[file_id] = file
@@ -56,10 +48,12 @@ class DriveFolder:
         files = [self.get_file(id) for id in file_ids]
         return files
 
-    def __iter__(self):
-        for file in self.files.values():
-            file.content = download_drive_file(file.id, self.drive)
+    def list_files(self):
+        return Files.parse_obj(list(self.files_dict.values()))
 
+    def __iter__(self):
+        for file in self.files_dict.values():
+            file = self.get_file(file.id)
             yield file
 
 
@@ -135,5 +129,30 @@ def get_drive_files_metadata(query, drive):
 
     return files
 
+
+def get_drive_folders(user):
+    ''' retrieve all folders'''
+
+    drive= build_drive_service(user)
+
+    page_token = None
+    folders =[]
+
+    q = "mimeType = 'application/vnd.google-apps.folder'"
+
+    print(f"Gdrive Api Query: '{q}'")
+    while True:
+        response = drive.files().list(q=q,
+                                              spaces='drive',
+                                              fields='nextPageToken, files(id, name, modifiedTime)',
+                                              pageToken=page_token).execute()
+        for file in response.get('files', []):
+            # Process change
+            folders.append(file)
+            print(f"Found file {file.get('name')} : {file.get('id')}")
+        page_token = response.get('nextPageToken', None)
+        if page_token is None:
+            break
+    return folders
 
 

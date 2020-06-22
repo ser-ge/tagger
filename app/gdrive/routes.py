@@ -9,10 +9,12 @@ import googleapiclient
 from flask_login import login_required, current_user
 from app.gdrive import google_auth
 
-from app.gdrive.utils import *
 from app.gdrive import gdrive
-from app import db
 
+from app import db
+from app.gdrive.drive_folder import DriveFolder
+from app.models import User
+from app.schemas import File, Files
 
 DRIVE_SCOPES =["https://www.googleapis.com/auth/drive"]
 LOGIN_SCOPES = ["https://www.googleapis.com/auth/userinfo.profile",  "openid", "https://www.googleapis.com/auth/userinfo.email"]
@@ -39,24 +41,24 @@ def auth_gdrive_callback():
   db.session.commit()
   return redirect(url_for('gdrive.test_api_request'))
 
-@gdrive.route('/get_gdrive_folders')
-@login_required
-def get_gdrive_folders():
-    folders = get_drive_folders(user)
-    folders_dict = {folder['name']:folder['id'] for folder in folders}
-    return jsonify(folders_dict)
+# @gdrive.route('/get_gdrive_folders')
+# @login_required
+# def get_gdrive_folders():
+#     folders = get_drive_folders(user)
+#     folders_dict = {folder['name']:folder['id'] for folder in folders}
+#     return jsonify(folders_dict)
+
 
 
 @gdrive.route('/test')
-@login_required
 def test_api_request():
-    if current_user.google_creds is None:
-        return redirect('gdrive.authorize')
 
-    drive = build_drive_service(user)
-    files = drive.files().list().execute()
+    user = User.query.first()
 
-    return jsonify(**files)
+    folder  = DriveFolder(user.google_creds, user.gdrive_folder_id)
+    files: Files = folder.list_files()
+
+    return files.json(by_alias=True)
 
 
 @gdrive.route('/revoke')

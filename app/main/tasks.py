@@ -12,7 +12,7 @@ from app.models import User, Tag
 from app.evernote.utils import build_evernote_store, get_evernote_tags
 from app.note import Note
 
-from app.adapters import DriveFolder, File
+from app.gdrive import DriveFolder, File
 
 def sync_evernote_tags(user_id):
     user = User.query.get(user_id)

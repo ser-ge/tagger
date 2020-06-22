@@ -14,7 +14,7 @@ from app.ocr import ocr_google
 from app.evernote.utils import new_evernote
 TAG_MARK = '@'
 
-from app.adapter import File
+from app.schemas import File
 
 class Note:
     """
@@ -28,11 +28,12 @@ class Note:
 
     def __init__(self, file: File, target_tags: List[str]):
 
-        self.path = file.names
+        self.mime_type = file.mime_type
+        self.path = file.name
         self.file_buff = file.content
         self.target_tags = target_tags
         self.img_types = ['png', 'jpg', 'jpeg']
-        self.ext = path.split('.')[-1]
+        self.ext = file.name.split('.')[-1]
 
         self.target_actions = { "new": self.add_new_tag}
 
@@ -40,7 +41,7 @@ class Note:
 
     def _load_from_buff(self):
 
-        if self.ext == 'pdf':
+        if self.mime_type == 'application/pdf':
             self.image = convert_from_bytes(self.file_buff.getvalue(), single_file=True)[0]
             self.file_buff.truncate(0)
             self.file_buff.seek(0)

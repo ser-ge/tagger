@@ -12,9 +12,11 @@ import pickle
 
 from app.ocr import ocr_google
 from app.evernote.utils import new_evernote
-TAG_MARK = '@'
+
+TAG_MARK = "@"
 
 from app.schemas import File
+
 
 class Note:
     """

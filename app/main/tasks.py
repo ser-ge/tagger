@@ -14,16 +14,17 @@ from app.note import Note
 
 from app.gdrive import DriveFolder, File
 
+
 def sync_evernote_tags(user_id):
     user = User.query.get(user_id)
     ever_tags = get_evernote_tags(user)
     user_tags = [tag.text for tag in user.tags]
-    new_tags = [Tag(text=tag) for tag in ever_tags if tag  not in user_tags]
+    new_tags = [Tag(text=tag) for tag in ever_tags if tag not in user_tags]
     user.tags += new_tags
     db.session.commit()
 
 
-@celery.task(name='sync_drive_to_evernote')
+@celery.task(name="sync_drive_to_evernote")
 def sync_drive_to_evernote(user_id: str):
 
     user = User.query.get(user_id)
@@ -31,8 +32,9 @@ def sync_drive_to_evernote(user_id: str):
     target_tags = [str(tag) for tag in user.tags]
     note_store = build_evernote_store(user)
 
-    new_files: Iterable[File] = DriveFolder(user.google_creds, user.gdrive_folder_id, user.last_gdrive_sync)
-
+    new_files: Iterable[File] = DriveFolder(
+        user.google_creds, user.gdrive_folder_id, user.last_gdrive_sync
+    )
 
     for file in new_files:
         note = Note(file, target_tags)
@@ -45,7 +47,8 @@ def sync_drive_to_evernote(user_id: str):
     user.last_gdrive_sync = datetime.utcnow()
     db.session.commit()
 
-@celery.task(bind=True,name='sync_all_users')
+
+@celery.task(bind=True, name="sync_all_users")
 def sync_all_users(self):
     users = db.session.query(User).all()
     n = len(users)
@@ -54,10 +57,3 @@ def sync_all_users(self):
         sync_drive_to_evernote(user.user_id)
         message = f"{i} of {n} users synced"
         print(message)
-
-
-
-
-
-
-

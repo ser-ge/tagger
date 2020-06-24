@@ -108,7 +108,7 @@ class Note:
                            .split(TAG_MARK)[1]
 
             words = tags.split(" ")
-            words = list(filter(None, words)) # remove empty strings
+            words = list(filter(None, words))  # remove empty strings
             self.raw_tags.extend(words)
 
         return self.raw_tags

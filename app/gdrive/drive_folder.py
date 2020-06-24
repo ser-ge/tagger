@@ -36,8 +36,8 @@ class DriveFolder:
 
 
     def get_file(self, file_id):
-
         file = self.files_dict[file_id]
+
         if file.content is None:
             file.content = download_drive_file(file.id)
             self.files[file_id] = file
@@ -48,13 +48,12 @@ class DriveFolder:
         files = [self.get_file(id) for id in file_ids]
         return files
 
-    def list_files(self):
+    def list_files(self) -> Files:
         return Files.parse_obj(list(self.files_dict.values()))
 
     def __iter__(self):
         for file in self.files_dict.values():
-            file = self.get_file(file.id)
-            yield file
+            yield self.get_file(file.id)
 
 
 
@@ -79,6 +78,7 @@ def download_drive_file(file_id, drive):
     return file_buff
 
 def construct_drive_query(parent_folder_id, filters):
+    #TODO refactor
 
     q = f"'{parent_folder_id}' in parents"
     q+= " and "

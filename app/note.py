@@ -23,20 +23,16 @@ class Note:
     Base Class for Processing Scanned Documents (Notes)
 
     Args:
-        path (str): file path or file name with extension
-        file_buff (BytesIO): image or pdf to be processed
+        file (File): input file object
         target_tags ([str,]): list of target tags against witch found tags are matched
     """
 
     def __init__(self, file: File, target_tags: List[str]):
 
         self.mime_type = file.mime_type
-        self.path = file.name
-        self.file_buff = file.content
+        self.name = file.name
+        self.content = file.content
         self.target_tags = target_tags
-        self.img_types = ["png", "jpg", "jpeg"]
-        self.ext = file.name.split(".")[-1]
-
         self.target_actions = {"new": self.add_new_tag}
 
         print("Extension: ", self.ext)
@@ -53,7 +49,7 @@ class Note:
             self.content = buff
             self.file_buff.close()
 
-        elif self.ext in self.img_types:
+        elif self.mime_type in ["image/png", "image/jpg", "image/jpeg"]:
             self.content = self.file_buff
             self.image = Image.open(self.content)
             buff = BytesIO()
@@ -64,21 +60,6 @@ class Note:
         else:
             raise TypeError("Invalid file format: only images or pdfs allowed")
 
-    def _load_from_path(self):
-
-        with io.open(self.path, "rb") as f:
-            if self.ext == "pdf":
-                self.image = convert_from_bytes(f.read(), single_file=True)[0]
-                buff = BytesIO()
-                self.image.save(buff, format="JPEG")
-                self.content = buff
-
-            elif self.ext in self.img_types:
-                self.content = BytesIO(f.read())
-                self.image = Image.open(self.content)
-
-            else:
-                raise TypeError("Invalid file format: only images or pdfs allowed")
 
     def to_text(self, service="google"):
         if service == "google":
@@ -168,10 +149,7 @@ class Note:
             tags: tags matched in target_tags
             image: PIL image object
         """
-        if self.file_buff:
-            self._load_from_buff()
-        else:
-            self._load_from_path()
+        self._load_from_buff()
         self.to_text()
         self.title = self.raw_text.split("\n")[0]
         self.extract_raw_tags()
@@ -198,7 +176,7 @@ class Note:
             return note
 
         except Exception as e:
-            print(f"{note.path} failed with exception: {e}")
+            print(f"{note.name} failed with exception: {e}")
 
         finally:
             self.content.close()
@@ -215,12 +193,3 @@ def fuzzy_match(new_tag, target_tags, theta=65):
         return result[0]
     else:
         return None
-
-
-if __name__ == "__main__":
-    note = Note(path)
-    note.process()
-
-    info = f"""Note Text:\n{note.raw_text}Tags: {note.raw_tags} """
-
-    print(info)

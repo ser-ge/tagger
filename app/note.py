@@ -34,20 +34,22 @@ class Note:
         self.path = file.name
         self.file_buff = file.content
         self.target_tags = target_tags
-        self.img_types = ['png', 'jpg', 'jpeg']
-        self.ext = file.name.split('.')[-1]
+        self.img_types = ["png", "jpg", "jpeg"]
+        self.ext = file.name.split(".")[-1]
 
-        self.target_actions = { "new": self.add_new_tag}
+        self.target_actions = {"new": self.add_new_tag}
 
         print("Extension: ", self.ext)
 
     def _load_from_buff(self):
 
-        if self.mime_type == 'application/pdf':
-            self.image = convert_from_bytes(self.file_buff.getvalue(), single_file=True)[0]
+        if self.mime_type == "application/pdf":
+            self.image = convert_from_bytes(
+                self.file_buff.getvalue(), single_file=True
+            )[0]
             self.file_buff.truncate(0)
             self.file_buff.seek(0)
-            self.image.save(self.file_buff, format='JPEG')
+            self.image.save(self.file_buff, format="JPEG")
             self.content = buff
             self.file_buff.close()
 
@@ -55,59 +57,57 @@ class Note:
             self.content = self.file_buff
             self.image = Image.open(self.content)
             buff = BytesIO()
-            self.image.save(buff, format='JPEG')
+            self.image.save(buff, format="JPEG")
             self.content = buff
             self.file_buff.close()
-
 
         else:
             raise TypeError("Invalid file format: only images or pdfs allowed")
 
     def _load_from_path(self):
 
-        with io.open(self.path, 'rb') as f:
-            if self.ext == 'pdf':
+        with io.open(self.path, "rb") as f:
+            if self.ext == "pdf":
                 self.image = convert_from_bytes(f.read(), single_file=True)[0]
                 buff = BytesIO()
-                self.image.save(buff, format='JPEG')
+                self.image.save(buff, format="JPEG")
                 self.content = buff
 
             elif self.ext in self.img_types:
-                self.content =  BytesIO(f.read())
+                self.content = BytesIO(f.read())
                 self.image = Image.open(self.content)
 
             else:
                 raise TypeError("Invalid file format: only images or pdfs allowed")
 
-    def to_text(self, service='google'):
-        if service == 'google':
+    def to_text(self, service="google"):
+        if service == "google":
             self.raw_text = ocr_google(self.content)
         return self.raw_text
 
     def extract_raw_tags(self, mode="linewise"):
-
+        """
+        a tag is one or more words on a line begining with @
+        one tag per line
+        """
         self.raw_tags = []
 
         if mode == "linewise":
-            '''
-            a tag is one or more words on a line begining with @
-            one tag per line
-            '''
             lines = self.raw_text.split("\n")
             for line in lines:
                 if TAG_MARK in line:
                     words = line.strip().split(TAG_MARK)[-1].split(" ")
-                    words = list(filter(None, words)) # remove empty strings
+                    words = list(filter(None, words))  # remove empty strings
                     tag = " ".join(words)
                     self.raw_tags.append(tag)
 
-
-        if mode == "end": # only single word tags supported in this mode
-            end_tags = self.raw_text\
-                           .replace('\r', ' ')\
-                           .replace("\n", " ")\
-                           .strip()\
-                           .split(TAG_MARK)[1]
+        if mode == "end":  # only single word tags supported in this mode
+            end_tags = (
+                self.raw_text.replace("\r", " ")
+                .replace("\n", " ")
+                .strip()
+                .split(TAG_MARK)[1]
+            )
 
             words = tags.split(" ")
             words = list(filter(None, words))  # remove empty strings
@@ -131,18 +131,17 @@ class Note:
 
         for action, params in self.matched_actions.items():
             try:
-                 self.actions[action](self,*params)
+                self.actions[action](self, *params)
 
             except KeyError:
                 raise KeyError
 
             except Exception as e:
-                print(f'Action {action} failed')
+                print(f"Action {action} failed")
                 print(e)
 
-
     def match_tags(self, allow_new_tag=False):
-        '''Match raw tags against a list of target_tags, assign closest match to self.tags'''
+        """Match raw tags against a list of target_tags, assign closest match to self.tags"""
 
         self.tags = []
         for raw_tag in self.raw_tags:
@@ -176,32 +175,41 @@ class Note:
         self.to_text()
         self.title = self.raw_text.split("\n")[0]
         self.extract_raw_tags()
-        if self.target_actions: self.match_actions()
+        if self.target_actions:
+            self.match_actions()
         self.match_tags()
-        if self.target_actions: self.process_actions()
+        if self.target_actions:
+            self.process_actions()
         return self.title, self.raw_text, self.tags, self.image
 
     def to_evernote(self, note_store, process=True):
 
         try:
-            if process: self.process()
-            note = new_evernote(note_store, self.title, self.raw_text,self.tags, jpeg_bytesio=self.content)
+            if process:
+                self.process()
+            note = new_evernote(
+                note_store,
+                self.title,
+                self.raw_text,
+                self.tags,
+                jpeg_bytesio=self.content,
+            )
 
             return note
 
         except Exception as e:
-            print(f'{note.path} failed with exception: {e}')
+            print(f"{note.path} failed with exception: {e}")
 
         finally:
             self.content.close()
 
 
-
-
 def fuzzy_match(new_tag, target_tags, theta=65):
-    '''Find the closest matching tag in target tags'''
+    """Find the closest matching tag in target tags"""
 
-    result= process.extractOne(new_tag, target_tags, scorer=fuzz.partial_token_sort_ratio )
+    result = process.extractOne(
+        new_tag, target_tags, scorer=fuzz.partial_token_sort_ratio
+    )
     if result and (result[1] > theta):
         print(f"{new_tag} ==> {result[0]} ; score: {result[1]}")
         return result[0]
@@ -209,20 +217,10 @@ def fuzzy_match(new_tag, target_tags, theta=65):
         return None
 
 
-
 if __name__ == "__main__":
     note = Note(path)
     note.process()
 
-    info = f'''Note Text:\n{note.raw_text}Tags: {note.raw_tags} '''
+    info = f"""Note Text:\n{note.raw_text}Tags: {note.raw_tags} """
 
     print(info)
-
-
-
-
-
-
-
-
-

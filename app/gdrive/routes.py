@@ -14,7 +14,7 @@ from app.gdrive import gdrive
 from app import db
 from app.gdrive.drive_folder import DriveFolder
 from app.models import User
-from app.schemas import File, Files
+from app.schemas import File, Files, JSON_CONFIG
 
 DRIVE_SCOPES =["https://www.googleapis.com/auth/drive"]
 LOGIN_SCOPES = ["https://www.googleapis.com/auth/userinfo.profile",  "openid", "https://www.googleapis.com/auth/userinfo.email"]
@@ -58,8 +58,7 @@ def test_api_request():
     folder  = DriveFolder(user.google_creds, user.gdrive_folder_id)
     files: Files = folder.list_files()
 
-    return files.json(by_alias=True)
-
+    return files.json(**JSON_CONFIG)
 
 @gdrive.route('/revoke')
 @login_required

@@ -5,42 +5,18 @@ from typing import List, Optional, Set
 from pydantic import BaseModel, validator, Field
 
 
-class CustomBase(BaseModel):
-    class Config:
-        include: Set[str] = set()
-        exclude: Set[str] = set()
-
-    def json(self, **kwargs):
-        '''
-        overides json method to allow setting exclude / include in Config
-        instead of calling  model.json(exclude={'key':...}) on every instance
-        '''
-        include = kwargs.pop('include', set())
-        include = include.union(getattr(self.Config, "include", set()))
-        if len(include) == 0:
-            include = None
-
-        exclude = kwargs.pop('exclude', set())
-        exclude = exclude.union(getattr(self.Config, "exclude", set()))
-        if len(exclude) == 0:
-            exclude = None
-
-        return super().json(include=include, exclude=exclude, **kwargs)
-
-
-class File(CustomBase):
+class File(BaseModel):
     id: str
     name: str
-    date_modified: datetime = Field(..., alias='modifiedTime')
-    mime_type: str = Field(..., alias='mimeType')
+    date_modified: datetime = Field(..., alias="modifiedTime")
+    mime_type: str = Field(..., alias="mimeType")
     content: Optional[BytesIO]
 
     class Config:
         arbitrary_types_allowed = True
-        exclude = {'content'}
 
 
-class Files(CustomBase):
+class Files(BaseModel):
 
     __root__: List[File]
 
@@ -48,5 +24,4 @@ class Files(CustomBase):
         return self.__root__[item]
 
 
-
-
+JSON_CONFIG = {"by_alias": True, "exclude": {"__root__": {"__all__": {"content"}}}}

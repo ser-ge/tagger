@@ -35,7 +35,6 @@ function App() {
     return (
         <Fragment>
             <Router>
-                <div className="container vh-100">               
                  <Nav user={mUser} />
                     <Switch>
                         <Route path="/home">
@@ -45,7 +44,6 @@ function App() {
                             <Dashboard user={user} />
                         </Route>
                     </Switch>
-                </div>
 
             </Router>
         </Fragment>

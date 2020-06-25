@@ -3,7 +3,7 @@ import {Link} from "react-router-dom"
 
 const Nav = ({user}) => {
   return (
-    <nav class="navbar navbar-expand-lg navbar-light bg-light justify-content-between">
+    <nav class="vw-100 navbar navbar-expand-lg navbar-light bg-white justify-content-between">
       <a class="navbar-brand " href="#">
         Tagger
       </a>

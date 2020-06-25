@@ -39,7 +39,7 @@ class DriveFolder:
         file = self.files_dict[file_id]
 
         if file.content is None:
-            file.content = download_drive_file(file.id)
+            file.content = download_drive_file(file.id, self.drive)
             self.files[file_id] = file
 
         return file

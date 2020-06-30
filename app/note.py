@@ -35,27 +35,24 @@ class Note:
         self.target_tags = target_tags
         self.target_actions = {"new": self.add_new_tag}
 
-        print("Extension: ", self.ext)
 
     def _load_from_buff(self):
 
         if self.mime_type == "application/pdf":
             self.image = convert_from_bytes(
-                self.file_buff.getvalue(), single_file=True
+                self.content.getvalue(), single_file=True
             )[0]
-            self.file_buff.truncate(0)
-            self.file_buff.seek(0)
-            self.image.save(self.file_buff, format="JPEG")
-            self.content = buff
-            self.file_buff.close()
+            self.content.truncate(0)
+            self.content.seek(0)
+            self.image.save(self.content, format="JPEG")
 
         elif self.mime_type in ["image/png", "image/jpg", "image/jpeg"]:
-            self.content = self.file_buff
+            self.content = self.content
             self.image = Image.open(self.content)
             buff = BytesIO()
             self.image.save(buff, format="JPEG")
             self.content = buff
-            self.file_buff.close()
+            self.content.close()
 
         else:
             raise TypeError("Invalid file format: only images or pdfs allowed")
@@ -176,7 +173,7 @@ class Note:
             return note
 
         except Exception as e:
-            print(f"{note.name} failed with exception: {e}")
+            print(f"{self.name} failed with exception: {e}")
 
         finally:
             self.content.close()

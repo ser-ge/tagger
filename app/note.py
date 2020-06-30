@@ -52,7 +52,6 @@ class Note:
             buff = BytesIO()
             self.image.save(buff, format="JPEG")
             self.content = buff
-            self.content.close()
 
         else:
             raise TypeError("Invalid file format: only images or pdfs allowed")

@@ -15,10 +15,10 @@ from app.evernote.utils import new_evernote
 
 TAG_MARK = "@"
 
-from app.schemas import File
+from app.schemas import File, Note
 
 
-class Note:
+class Reader:
     """
     Base Class for Processing Scanned Documents (Notes)
 
@@ -27,14 +27,8 @@ class Note:
         target_tags ([str,]): list of target tags against witch found tags are matched
     """
 
-    def __init__(self, file: File, target_tags: List[str]):
-
-        self.mime_type = file.mime_type
-        self.name = file.name
-        self.content = file.content
+    def __init__(self, target_tags: List[str]):
         self.target_tags = target_tags
-        self.target_actions = {"new": self.add_new_tag}
-
 
     def _load_from_buff(self):
 
@@ -137,24 +131,28 @@ class Note:
 
         self.tags += tags
 
-    def process(self):
-        """
-        Returns:
-            title: first line of text
-            text: whole text, including first line
-            tags: tags matched in target_tags
-            image: PIL image object
-        """
+    def parse(self, file):
+
+        self.mime_type = file.mime_type
+        self.name = file.name
+        self.content = file.content
+        self.target_actions = {"new": self.add_new_tag}
+
         self._load_from_buff()
         self.to_text()
-        self.title = self.raw_text.split("\n")[0]
+        title = self.raw_text.split("\n")[0]
         self.extract_raw_tags()
         if self.target_actions:
             self.match_actions()
         self.match_tags()
         if self.target_actions:
             self.process_actions()
-        return self.title, self.raw_text, self.tags, self.image
+
+        note = Note(**file.dict(by_alias=True), tags=self.tags, text=self.raw_text, title=title)
+
+        return note
+
+
 
     def to_evernote(self, note_store, process=True):
 

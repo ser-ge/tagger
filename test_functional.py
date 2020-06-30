@@ -1,6 +1,12 @@
 import os
 from app.note_writter import NoteRepo
 import pytest
+from datetime import datetime
+
+from app.note_writter import NoteRepo
+from app.schemas import File
+from app.note import Reader
+from io import BytesIO
 
 @pytest.fixture
 def app():
@@ -46,10 +52,40 @@ def evernote_token():
     return token
 
 def test_evernote_repo(evernote_token):
-    from app.note_writter import NoteRepo
 
     note_repo = NoteRepo(evernote_token)
 
     print(note_repo.tags)
 
     assert len(note_repo.tags) > 0
+
+@pytest.fixture
+def file():
+
+    f = open('test_file.pdf', 'rb')
+
+    file_content = BytesIO(f.read())
+
+    file = File(
+            source_id='12345',
+            name='test_file.pdf',
+            modifiedTime=datetime.utcnow(),
+            mimeType='application/pdf',
+            source='local',
+            content=file_content,
+            )
+
+    yield file
+
+    f.close()
+
+
+def test_reader(file):
+
+    target_tags = ['reporting', 'work', 'gym', 'place']
+    reader = Reader(target_tags)
+
+    note = reader.parse(file)
+
+    assert note.tags == ['reporting']
+

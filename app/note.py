@@ -30,51 +30,26 @@ class Reader:
     def __init__(self, target_tags: List[str]):
         self.target_tags = target_tags
 
-    def _load_from_buff(self):
 
-        if self.mime_type == "application/pdf":
-            self.image = convert_from_bytes(
-                self.content.getvalue(), single_file=True
-            )[0]
-            self.content.truncate(0)
-            self.content.seek(0)
-            self.image.save(self.content, format="JPEG")
-
-        elif self.mime_type in ["image/png", "image/jpg", "image/jpeg"]:
-            self.content = self.content
-            self.image = Image.open(self.content)
-            buff = BytesIO()
-            self.image.save(buff, format="JPEG")
-            self.content = buff
-
-        else:
-            raise TypeError("Invalid file format: only images or pdfs allowed")
-
-
-    def to_text(self, service="google"):
-        if service == "google":
-            self.raw_text = ocr_google(self.content)
-        return self.raw_text
-
-    def extract_raw_tags(self, mode="linewise"):
+    def extract_raw_tags(self, raw_text, mode="linewise"):
         """
         a tag is one or more words on a line begining with @
         one tag per line
         """
-        self.raw_tags = []
+        raw_tags = []
 
         if mode == "linewise":
-            lines = self.raw_text.split("\n")
+            lines = raw_text.split("\n")
             for line in lines:
                 if TAG_MARK in line:
                     words = line.strip().split(TAG_MARK)[-1].split(" ")
                     words = list(filter(None, words))  # remove empty strings
                     tag = " ".join(words)
-                    self.raw_tags.append(tag)
+                    raw_tags.append(tag)
 
         if mode == "end":  # only single word tags supported in this mode
             end_tags = (
-                self.raw_text.replace("\r", " ")
+                raw_text.replace("\r", " ")
                 .replace("\n", " ")
                 .strip()
                 .split(TAG_MARK)[1]
@@ -82,73 +57,40 @@ class Reader:
 
             words = tags.split(" ")
             words = list(filter(None, words))  # remove empty strings
-            self.raw_tags.extend(words)
+            raw_tags.extend(words)
 
-        return self.raw_tags
+        return raw_tags
 
-    def match_actions(self):
-        self.matched_actions = {}
 
-        for raw_tag in self.raw_tags:
-            first = raw_tag.split(" ")[0]
-            rest = raw_tag.split()[1:]
-            matching_action = fuzzy_match(first, self.target_actions)
-
-            if matching_action:
-                self.actions[matching_action] = rest
-                self.raw_tags.remove(raw_tag)
-
-    def process_actions(self):
-
-        for action, params in self.matched_actions.items():
-            try:
-                self.actions[action](self, *params)
-
-            except KeyError:
-                raise KeyError
-
-            except Exception as e:
-                print(f"Action {action} failed")
-                print(e)
-
-    def match_tags(self, allow_new_tag=False):
+    def match_tags(self,raw_tags, allow_new_tag=False):
         """Match raw tags against a list of target_tags, assign closest match to self.tags"""
 
-        self.tags = []
-        for raw_tag in self.raw_tags:
+        tags = []
+        for raw_tag in raw_tags:
             matching_tag = fuzzy_match(raw_tag, self.target_tags)
 
             if matching_tag is not None:
-                self.tags.append(matching_tag)
+                tags.append(matching_tag)
 
             if matching_tag is None and allow_new_tag:
-                self.tags.append(raw_tag)
+                tags.append(raw_tag)
 
-        return self.tags
-
-    def add_new_tag(self, *args):
-        tag = " ".join(args)
-
-        self.tags += tags
+        return tags
 
     def parse(self, file):
 
-        self.mime_type = file.mime_type
-        self.name = file.name
-        self.content = file.content
-        self.target_actions = {"new": self.add_new_tag}
+        note = Note(**file.dict(by_alias=True))
 
-        self._load_from_buff()
-        self.to_text()
-        title = self.raw_text.split("\n")[0]
-        self.extract_raw_tags()
-        if self.target_actions:
-            self.match_actions()
-        self.match_tags()
-        if self.target_actions:
-            self.process_actions()
+        jpeg_bytes_io = to_jpeg_bytes_io(file.content, file.mime_type)
+        raw_text = ocr(jpeg_bytes_io)
 
-        note = Note(**file.dict(by_alias=True), tags=self.tags, text=self.raw_text, title=title)
+        raw_tags = self.extract_raw_tags(raw_text)
+        tags = self.match_tags(raw_tags)
+        title = raw_text.split("\n")[0]
+
+        note.tags = tags
+        note.title = title
+        note.text = raw_text
 
         return note
 
@@ -175,6 +117,31 @@ class Reader:
         finally:
             self.content.close()
 
+
+def ocr(jpeg_bytes_io, service="google"):
+    if service == "google":
+        raw_text = ocr_google(jpeg_bytes_io)
+    return raw_text
+
+def to_jpeg_bytes_io(bytes_io, mime_type):
+
+        if mime_type == "application/pdf":
+            image = convert_from_bytes(
+                bytes_io.getvalue(), single_file=True
+            )[0]
+            jpeg_bytes_io = BytesIO()
+            image.save(jpeg_bytes_io, format="JPEG")
+
+        elif mime_type in ["image/png", "image/jpg", "image/jpeg"]:
+            image = Image.open(bytes_io)
+            jpeg_bytes_io = BytesIO()
+            image.save(jpeg_bytes_io, format="JPEG")
+        else:
+            raise TypeError("Invalid file format: only images or pdfs allowed")
+
+        bytes_io.close() # in case BufferedFile is passed rather than in memmory BytesIO
+
+        return jpeg_bytes_io
 
 def fuzzy_match(new_tag, target_tags, theta=65):
     """Find the closest matching tag in target tags"""

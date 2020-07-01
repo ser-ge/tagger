@@ -92,7 +92,7 @@ class Reader:
         note.title = title
         note.text = raw_text
 
-       return note
+        return note
 
     def to_evernote(self, note_store, process=True):
 

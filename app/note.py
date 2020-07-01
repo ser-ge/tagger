@@ -92,9 +92,7 @@ class Reader:
         note.title = title
         note.text = raw_text
 
-        return note
-
-
+       return note
 
     def to_evernote(self, note_store, process=True):
 
@@ -118,6 +116,8 @@ class Reader:
             self.content.close()
 
 
+
+
 def ocr(jpeg_bytes_io, service="google"):
     if service == "google":
         raw_text = ocr_google(jpeg_bytes_io)
@@ -125,23 +125,26 @@ def ocr(jpeg_bytes_io, service="google"):
 
 def to_jpeg_bytes_io(bytes_io, mime_type):
 
-        if mime_type == "application/pdf":
-            image = convert_from_bytes(
-                bytes_io.getvalue(), single_file=True
-            )[0]
-            jpeg_bytes_io = BytesIO()
-            image.save(jpeg_bytes_io, format="JPEG")
+    image_types = ["image/png", "image/jpg", "image/jpeg"]
 
-        elif mime_type in ["image/png", "image/jpg", "image/jpeg"]:
-            image = Image.open(bytes_io)
-            jpeg_bytes_io = BytesIO()
-            image.save(jpeg_bytes_io, format="JPEG")
-        else:
-            raise TypeError("Invalid file format: only images or pdfs allowed")
+    if mime_type == "application/pdf":
+        image = convert_from_bytes(
+            bytes_io.getvalue(), single_file=True
+        )[0]
+        jpeg_bytes_io = BytesIO()
+        image.save(jpeg_bytes_io, format="JPEG")
 
-        bytes_io.close() # in case BufferedFile is passed rather than in memmory BytesIO
+    elif mime_type in image_types:
+        image = Image.open(bytes_io)
+        jpeg_bytes_io = BytesIO()
+        image.save(jpeg_bytes_io, format="JPEG")
 
-        return jpeg_bytes_io
+    else:
+        raise TypeError("Invalid file format: only images or pdfs allowed")
+
+    bytes_io.close() # in case BufferedFile is passed rather than in memmory BytesIO
+
+    return jpeg_bytes_io
 
 def fuzzy_match(new_tag, target_tags, theta=65):
     """Find the closest matching tag in target tags"""

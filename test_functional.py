@@ -1,12 +1,19 @@
 import os
-from app.note_writter import NoteRepo
-import pytest
 from datetime import datetime
+from io import BytesIO
 
-from app.note_writter import NoteRepo
+import pytest
+
+from app import create_app, db
+from app.models import User
+from app.note_writter import NoteRepo, OrgStore
 from app.schemas import File
 from app.note import Reader
-from io import BytesIO
+from app.main.tasks import drive_to_org
+
+from app.gdrive.drive_folder import DriveFolder
+
+
 
 @pytest.fixture
 def app():
@@ -34,17 +41,14 @@ def credentials(user):
     return [('Authentication', user.get_auth_token())]
 
 @pytest.fixture
-def db(app):
+def user(app):
     app = create_app()
-    from app import db
-    with app.app_context:
-        yield db
-        db.session.commit()
-        db.session.remove()
+    with app.app_context():
+        yield User.query.first()
 
-@pytest.fixture
-def user(db):
-    user = db.session.query(User).first()
+# @pytest.fixture
+# def user(db):
+#     user = db.session.query(User).first()
 
 @pytest.fixture
 def evernote_token():
@@ -52,11 +56,8 @@ def evernote_token():
     return token
 
 def test_evernote_repo(evernote_token):
-
     note_repo = NoteRepo(evernote_token)
-
     print(note_repo.tags)
-
     assert len(note_repo.tags) > 0
 
 @pytest.fixture
@@ -88,4 +89,42 @@ def test_reader(file):
     note = reader.parse(file)
 
     assert note.tags == ['reporting']
+
+
+
+def test_drive_folder(user):
+    new_files = DriveFolder(
+            credentials=user.google_creds,
+            folder_name='CamScanner'
+            )
+
+    files_list = new_files.list_files()
+
+    print(files_list)
+
+    names = [file.name for file in files_list]
+
+    assert 'hake.pdf' in names
+
+
+
+def test_org_store(file):
+
+    target_tags = ['reporting', 'work', 'gym', 'place']
+    reader = Reader(target_tags)
+
+    note = reader.parse(file)
+    store = OrgStore('/Users/serge/Dropbox/org/', 'notes.org')
+    store.create(note)
+
+
+def test_drive_to_org(user):
+    print(f'user: {user}')
+    drive_to_org(user)
+    assert False
+
+# TODO NEXT FIX drive to org
+
+
+
 

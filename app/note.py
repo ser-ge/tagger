@@ -1,6 +1,7 @@
 import io
 from io import BytesIO
 from typing import List
+from collections import defaultdict
 
 import os
 from pdf2image import convert_from_path, convert_from_bytes
@@ -61,6 +62,22 @@ class Reader:
 
         return raw_tags
 
+    def extract_raw_tags_key_value(self, raw_text, mode="linewise"):
+        """
+        Tag using command @ arguments syntax
+        """
+        raw_tags = defaultdict(list)
+
+        for line in lines:
+            if TAG_MARK in line:
+                lines = raw_text.split("\n")
+                key = line.strip().split(TAG_MARK)[0]
+                arguments = line.strip().split(TAG_MARK)[-1].split(" ")
+                arguments = list(filter(None, words))  # remove empty strings
+                raw_tags[key].expand(arguments)
+
+
+        return raw_tags
 
     def match_tags(self,raw_tags, allow_new_tag=False):
         """Match raw tags against a list of target_tags, assign closest match to self.tags"""
@@ -91,6 +108,8 @@ class Reader:
         note.tags = tags
         note.title = title
         note.text = raw_text
+
+        note.content = jpeg_bytes_io
 
         return note
 
@@ -142,7 +161,6 @@ def to_jpeg_bytes_io(bytes_io, mime_type):
     else:
         raise TypeError("Invalid file format: only images or pdfs allowed")
 
-    bytes_io.close() # in case BufferedFile is passed rather than in memmory BytesIO
 
     return jpeg_bytes_io
 
